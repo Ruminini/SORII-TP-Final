@@ -1,4 +1,4 @@
-#ifndef PORTAL_HTML_H // Esto es un "include guard" para evitar inclusiones múltiples
+#ifndef PORTAL_HTML_H
 #define PORTAL_HTML_H
 
 #include <pgmspace.h>
