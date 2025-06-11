@@ -33,7 +33,11 @@ void checkConnectedDevices() {
     }
     if (!found) {
       connectionLog.push_back({device.mac, device.ip, now, true, device.name});
-      Serial.printf("[+] Conectado: %s (%s)\n", device.mac.c_str(), device.ip.toString().c_str());
+      String mac = device.mac.c_str();
+      String ip = device.ip.toString().c_str();
+      Serial.printf("[+] Conectado: %s (%s)\n", mac, ip);
+      String data = "{\"Mac\":\"" + mac + "\",\"IP\":\"" + ip + "\"}";
+      ws.textAll("{\"type\": \"connect\", \"data\": " + data + "}");
     }
   }
 
@@ -47,7 +51,11 @@ void checkConnectedDevices() {
     }
     if (!stillConnected) {
       connectionLog.push_back({prev.mac, prev.ip, now, false, prev.name});
-      Serial.printf("[-] Desconectado: %s (%s)\n", prev.mac.c_str(), prev.ip.toString().c_str());
+      String mac = prev.mac.c_str();
+      String ip = prev.ip.toString().c_str();
+      Serial.printf("[-] Desconectado: %s (%s)\n", mac, ip);
+      String data = "{\"Mac\":\"" + mac + "\",\"IP\":\"" + ip + "\"}";
+      ws.textAll("{\"type\": \"disconnect\", \"data\": " + data + "}");
     }
   }
 

