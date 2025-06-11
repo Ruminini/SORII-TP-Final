@@ -33,9 +33,9 @@ void checkConnectedDevices() {
     }
     if (!found) {
       connectionLog.push_back({device.mac, device.ip, now, true, device.name});
-      String mac = device.mac.c_str();
-      String ip = device.ip.toString().c_str();
-      Serial.printf("[+] Conectado: %s (%s)\n", mac, ip);
+      String mac = device.mac;
+      String ip = device.ip.toString();
+      Serial.printf("[+] Conectado: %s (%s)\n", mac.c_str(), ip.c_str());
       String data = "{\"Mac\":\"" + mac + "\",\"IP\":\"" + ip + "\"}";
       ws.textAll("{\"type\": \"connect\", \"data\": " + data + "}");
     }
@@ -51,9 +51,9 @@ void checkConnectedDevices() {
     }
     if (!stillConnected) {
       connectionLog.push_back({prev.mac, prev.ip, now, false, prev.name});
-      String mac = prev.mac.c_str();
-      String ip = prev.ip.toString().c_str();
-      Serial.printf("[-] Desconectado: %s (%s)\n", mac, ip);
+      String mac = prev.mac;
+      String ip = prev.ip.toString();
+      Serial.printf("[-] Desconectado: %s (%s)\n", mac.c_str(), ip.c_str());
       String data = "{\"Mac\":\"" + mac + "\",\"IP\":\"" + ip + "\"}";
       ws.textAll("{\"type\": \"disconnect\", \"data\": " + data + "}");
     }
@@ -71,5 +71,61 @@ String getLogPre() {
     response += " as '" + log.name + "'\n";
   }
   response += "</pre>";
+  response += R"rawliteral(
+    <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const button = document.createElement("button");
+      button.textContent = "Cargar Vendor JSON";
+      button.style.marginBottom = "10px";
+
+      const fileInput = document.createElement("input");
+      fileInput.type = "file";
+      fileInput.accept = "application/json";
+      fileInput.style.display = "none";
+
+      button.onclick = () => fileInput.click();
+
+      fileInput.onchange = async () => {
+        const file = fileInput.files[0];
+        if (!file) return;
+
+        const text = await file.text();
+        let vendorData;
+
+        try {
+          vendorData = JSON.parse(text);
+        } catch (err) {
+          alert("JSON inválido.");
+          return;
+        }
+
+        const prefixMap = new Map();
+        vendorData.forEach(entry => {
+          const normPrefix = entry.macPrefix.toUpperCase();
+          prefixMap.set(normPrefix, entry.vendorName);
+        });
+
+        const pre = document.querySelector("pre");
+        const lines = pre.textContent.split("\n");
+        const updatedLines = lines.map(line => {
+          const match = line.match(/([0-9A-F]{2}:[0-9A-F]{2}:[0-9A-F]{2})/i);
+          if (!match) return line;
+
+          const macPrefix = match[1].toUpperCase();
+          const vendor = prefixMap.get(macPrefix);
+          if (vendor) {
+            return line.replace(/as\s+''/, `as '${vendor}'`);
+          }
+          return line;
+        });
+
+        pre.textContent = updatedLines.join("\n");
+      };
+
+      document.body.insertBefore(button, document.body.firstChild);
+      document.body.insertBefore(fileInput, button.nextSibling);
+    });
+    </script>
+  )rawliteral";
   return response;
 }
