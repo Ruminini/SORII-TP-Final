@@ -3,6 +3,7 @@
 #include <ESP8266WiFi.h>
 #include <ESPAsyncWebServer.h>
 
+#include "device_logger.h"
 #include "obs_toast_html.h"
 #include "portal_html.h"
 
@@ -60,6 +61,10 @@ void setup() {
     }
   });
 
+  server.on("/log", HTTP_GET, [](AsyncWebServerRequest *request) {
+    request->send(200, "text/html", getLogPre());
+  });
+
   server.onNotFound([](AsyncWebServerRequest *request) {
     if (request->method() == HTTP_GET) {
       if (!request->host().equals(apIP.toString()) && !request->host().equals("192.168.4.1")) {
@@ -81,21 +86,6 @@ void setup() {
 
   server.begin();
   Serial.println("Servidor HTTP iniciado.");
-}
-
-void checkConnectedDevices() {
-  struct station_info *station_list = wifi_softap_get_station_info();
-  Serial.println("Dispositivos conectados:");
-  while (station_list != NULL) {
-    Serial.print("IP: ");
-    Serial.print(IPAddress(station_list->ip).toString());
-    Serial.print(" | MAC: ");
-    Serial.printf("%02X:%02X:%02X:%02X:%02X:%02X\n",
-                  station_list->bssid[0], station_list->bssid[1], station_list->bssid[2],
-                  station_list->bssid[3], station_list->bssid[4], station_list->bssid[5]);
-    station_list = STAILQ_NEXT(station_list, next);
-  }
-  wifi_softap_free_station_info();
 }
 
 unsigned long lastDeviceCheck = 0;
