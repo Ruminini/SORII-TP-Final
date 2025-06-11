@@ -23,7 +23,7 @@ Este proyecto implementa una prueba de concepto (PoC) de ataque **Evil Twin** ut
 - ⏱️ Log de conexiones y desconexiones con timestamp
 - 📡 Comunicación en tiempo real con WebSockets
 - 💬 Notificaciones visuales ("toasts") por evento
-- 🏷️ Resolución de fabricantes por MAC prefix (OUI)
+- 🏷️ Resolución de fabricantes por MAC prefix (OUI), usando la base pública de [maclookup.app](https://maclookup.app/)
 
 ---
 
